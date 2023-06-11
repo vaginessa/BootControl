@@ -11,17 +11,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class MainViewModel constructor(context: Context) : ViewModel(), MainViewModelInterface {
+class MainViewModel constructor(context: Context) : ViewModel() {
     companion object {
         const val TAG: String = "BootControl/MainViewModel"
     }
     private val _isRefreshing: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    private lateinit var _uiState: MutableStateFlow<DeviceStateInterface>
+    private lateinit var _uiState: MutableStateFlow<BootControl>
     private var _error: String? = null
 
-    override val isRefreshing: StateFlow<Boolean>
+    val isRefreshing: StateFlow<Boolean>
         get() = _isRefreshing.asStateFlow()
-    override val uiState: StateFlow<DeviceStateInterface>
+    val uiState: StateFlow<BootControl>
         get() = _uiState.asStateFlow()
     val hasError: Boolean
         get() = _error != null
@@ -30,8 +30,9 @@ class MainViewModel constructor(context: Context) : ViewModel(), MainViewModelIn
 
     init {
         try {
-            _uiState = MutableStateFlow(DeviceState(context, _isRefreshing))
+            _uiState = MutableStateFlow(BootControl(context, _isRefreshing))
         } catch (e: Exception) {
+            Log.e(TAG, e.message, e)
             _error = e.message
         }
     }
@@ -44,11 +45,12 @@ class MainViewModel constructor(context: Context) : ViewModel(), MainViewModelIn
         }
     }
 
-    override fun refresh(context: Context) {
+    fun refresh(context: Context) {
         launch {
             try {
                 uiState.value.refresh(context)
             } catch (e: Exception) {
+                Log.e(TAG, e.message, e)
                 _error = e.message
             }
         }
@@ -64,13 +66,21 @@ class MainViewModel constructor(context: Context) : ViewModel(), MainViewModelIn
         }
     }
 
-    override fun activate(context: Context, slot: SlotStateInterface) {
+    fun activate(context: Context, slot: SlotState) {
         launch {
             val slotA = uiState.value.slotA.value
             val slotB = uiState.value.slotB.value
-            slotA.setActive(context, slotA == slot)
-            slotB.setActive(context, slotB == slot)
+            if (slotA == slot) {
+                Log.w(TAG, "activating slot a")
+                uiState.value.setActiveBootSlot(0U)
+            } else if (slotB == slot) {
+                Log.w(TAG, "activating slot b")
+                uiState.value.setActiveBootSlot(1U)
+            } else {
+                log(context, "Invalid slot", shouldThrow = true)
+            }
             log(context, "slot activated")
+            uiState.value.refresh(context)
         }
     }
 }

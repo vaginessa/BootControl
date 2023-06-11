@@ -1,6 +1,5 @@
 package com.github.capntrips.bootcontrol
 
-import android.content.res.Configuration
 import android.os.Build
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -15,9 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,15 +27,12 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.github.capntrips.bootcontrol.ui.theme.BootControlTheme
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
-fun MainContent(viewModel: MainViewModelInterface) {
+fun MainContent(viewModel: MainViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     Column {
         DataCard (title = stringResource(R.string.device)) {
@@ -75,32 +69,25 @@ fun MainContent(viewModel: MainViewModelInterface) {
 @Composable
 fun SlotCard(
     title: String,
-    viewModel: MainViewModelInterface,
-    slotStateFlow: StateFlow<SlotStateInterface>,
+    viewModel: MainViewModel,
+    slotStateFlow: StateFlow<SlotState>,
     isActive: Boolean
 ) {
     // TODO: hoist state?
     val slot by slotStateFlow.collectAsState()
-    val isRefreshing by slot.isRefreshing.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     DataCard (
         title = title,
         button = {
             if (!isRefreshing) {
                 if (!slot.active) {
-                    if (!slot.successful) {
-                        PatchButton(slot)
-                    } else {
+                    if (slot.successful) {
                         ActivateButton(viewModel, slot)
                     }
                 }
             }
         }
     ) {
-        HasStatusDataRow(
-            label = stringResource(R.string.retry_count),
-            value = slot.retryCount.toString(),
-            hasStatus = slot.retryCount > 0
-        )
         HasStatusDataRow(
             label = stringResource(R.string.unbootable),
             value = stringResource(if (slot.unbootable) R.string.yes else R.string.no),
@@ -116,27 +103,11 @@ fun SlotCard(
             value = stringResource(if (slot.active) R.string.yes else R.string.no),
             hasStatus = if (isActive) slot.active else !slot.active
         )
-        DataRow(
-            label = stringResource(R.string.fastboot_ok),
-            value = stringResource(if (slot.fastbootOk) R.string.yes else R.string.no)
-        )
     }
 }
 
 @Composable
-fun PatchButton(slot: SlotStateInterface) {
-    val context = LocalContext.current
-    Button(
-        modifier = Modifier.padding(0.dp),
-        shape = RoundedCornerShape(4.0.dp),
-        onClick = { slot.patch(context) }
-    ) {
-        Text(stringResource(R.string.patch))
-    }
-}
-
-@Composable
-fun ActivateButton(viewModel: MainViewModelInterface, slot: SlotStateInterface) {
+fun ActivateButton(viewModel: MainViewModel, slot: SlotState) {
     val context = LocalContext.current
     Button(
         modifier = Modifier.padding(0.dp),
@@ -240,26 +211,4 @@ fun HasStatusDataRow(
         value = value,
         valueColor = if (hasStatus) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     )
-}
-
-@ExperimentalMaterial3Api
-@Preview(
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
-)
-@Composable
-fun MainContentPreviewDark() {
-    MainContentPreviewLight()
-}
-
-@ExperimentalMaterial3Api
-@Preview(showBackground = true)
-@Composable
-fun MainContentPreviewLight() {
-    BootControlTheme {
-        Scaffold {
-            val viewModel: MainViewModelPreview = viewModel()
-            MainContent(viewModel)
-        }
-    }
 }

@@ -1,6 +1,5 @@
 package com.github.capntrips.bootcontrol
 
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,10 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.github.capntrips.bootcontrol.ui.theme.BootControlTheme
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
@@ -32,7 +28,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @ExperimentalMaterial3Api
 @Composable
-fun MainScreen(viewModel: MainViewModelInterface) {
+fun MainScreen(viewModel: MainViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -79,25 +75,5 @@ fun MainScreen(viewModel: MainViewModelInterface) {
                 MainContent(viewModel)
             }
         }
-    }
-}
-
-@ExperimentalMaterial3Api
-@Preview(
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
-)
-@Composable
-fun MainScreenPreviewDark() {
-    MainScreenPreviewLight()
-}
-
-@ExperimentalMaterial3Api
-@Preview(showBackground = true)
-@Composable
-fun MainScreenPreviewLight() {
-    BootControlTheme {
-        val viewModel: MainViewModelPreview = viewModel()
-        MainScreen(viewModel)
     }
 }
